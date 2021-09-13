@@ -56,12 +56,16 @@ mod ffi {
     extern "Rust" {
         type Encoding1;
         type Tokenizer;
+        type Tokenizer1;
 
         fn box_encoding1(encoding: &Encoding1) -> Box<Encoding1>;
 
         // FIXME many of the below functions should take Box, not &.
         //  Look for clone() in the implementations.
         fn tokenizer(model: &Model) -> Box<Tokenizer>;
+        fn from_file(file: &str) -> Result<Box<Tokenizer1>>;
+        fn from_pretrained(identifier: &str) -> Result<Box<Tokenizer1>>;
+
         fn set_normalizer(tokenizer: &mut Tokenizer, normalizer: &Normalizer);
         fn set_pre_tokenizer(tokenizer: &mut Tokenizer, pre_tokenizer: &PreTokenizer);
         fn set_post_processor(tokenizer: &mut Tokenizer, post_processor: &PostProcessor);
@@ -161,8 +165,26 @@ impl_extern_type!(Decoder, "huggingface::tokenizers::ffi::Decoder");
 #[derive(Deref, DerefMut)]
 struct Tokenizer(tk::TokenizerImpl<Model, Normalizer, PreTokenizer, PostProcessor, Decoder>);
 
+#[derive(Deref, DerefMut)]
+struct Tokenizer1(tk::Tokenizer);
+
 fn tokenizer(model: &Model) -> Box<Tokenizer> {
     Box::new(Tokenizer(tk::TokenizerImpl::new(model.clone())))
+}
+
+fn from_file(file: &str) -> Result<Box<Tokenizer1>> {
+    return match tk::Tokenizer::from_file(file) {
+        Ok(tokenizer) => Ok(Box::new(Tokenizer1(tokenizer))),
+        Err(e) => return Err(e),
+    };
+}
+
+// TODO: support the FromPretrainedParameters.
+fn from_pretrained(identifier: &str) -> Result<Box<Tokenizer1>> {
+    return match tk::Tokenizer::from_pretrained(identifier, None) {
+        Ok(tokenizer) => Ok(Box::new(Tokenizer1(tokenizer))),
+        Err(e) => return Err(e),
+    };
 }
 
 fn set_normalizer(tokenizer: &mut Tokenizer, normalizer: &Normalizer) {

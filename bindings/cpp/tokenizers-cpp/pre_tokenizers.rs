@@ -233,7 +233,7 @@ fn split_regex_pre_tokenizer(
 }
 
 fn punctuation_pre_tokenizer() -> Box<PreTokenizer> {
-    make_pre_tokenizer(Punctuation)
+    make_pre_tokenizer(Punctuation::default())
 }
 
 fn whitespace_split_pre_tokenizer() -> Box<PreTokenizer> {

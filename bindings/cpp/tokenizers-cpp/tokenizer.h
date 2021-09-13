@@ -144,6 +144,26 @@ public:
     explicit Tokenizer(Model&& model) : inner_(ffi::tokenizer(*model)){};
 
     /**
+     * @brief Constructs a Tokenizer from a JSON file.
+     *
+     * @param file The path to the JSON file.
+     */
+    static Tokenizer from_file(nonstd::string_view file) {
+        auto tokenizer = ffi::from_file(ffi::to_rust_str(file));
+        return {std::move(reinterpret_cast<rust::Box<ffi::Tokenizer>&>(tokenizer))};
+    }
+
+    /**
+     * @brief Constructs a Tokenizer from a model repo on the HuggingFace Hub.
+     *
+     * @param identifier The model repo identifier.
+     */
+    static Tokenizer from_pretrained(nonstd::string_view identifier) {
+        auto tokenizer = ffi::from_pretrained(ffi::to_rust_str(identifier));
+        return {std::move(reinterpret_cast<rust::Box<ffi::Tokenizer>&>(tokenizer))};
+    }
+
+    /**
      * @brief Specifies the normalizer.
      */
     Tokenizer& with_normalizer(Normalizer&& normalizer) {
