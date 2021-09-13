@@ -1,4 +1,7 @@
 #![warn(clippy::all)]
+// We need to allow these to use !declare_types
+#![allow(clippy::unnecessary_wraps)]
+#![allow(clippy::upper_case_acronyms)]
 
 extern crate neon;
 extern crate neon_serde;
@@ -19,6 +22,8 @@ mod trainers;
 mod utils;
 
 use neon::prelude::*;
+
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 register_module!(mut m, {
     // Tokenizer

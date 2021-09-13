@@ -1,11 +1,4 @@
-from tokenizers import (
-    Tokenizer,
-    AddedToken,
-    pre_tokenizers,
-    decoders,
-    trainers,
-    normalizers,
-)
+from tokenizers import Tokenizer, AddedToken, pre_tokenizers, decoders, trainers, normalizers, Regex
 import os
 from tokenizers.models import Unigram
 import json
@@ -33,18 +26,10 @@ class SentencePieceUnigramTokenizer(BaseTokenizer):
             tokenizer = Tokenizer(Unigram())
 
         tokenizer.normalizer = normalizers.Sequence(
-            [
-                normalizers.Nmt(),
-                normalizers.NFKC(),
-            ]
+            [normalizers.Nmt(), normalizers.NFKC(), normalizers.Replace(Regex(" {2,}"), " ")]
         )
-        tokenizer.pre_tokenizer = pre_tokenizers.Sequence(
-            [
-                pre_tokenizers.WhitespaceSplit(),
-                pre_tokenizers.Metaspace(
-                    replacement=replacement, add_prefix_space=add_prefix_space
-                ),
-            ]
+        tokenizer.pre_tokenizer = pre_tokenizers.Metaspace(
+            replacement=replacement, add_prefix_space=add_prefix_space
         )
         tokenizer.decoder = decoders.Metaspace(
             replacement=replacement, add_prefix_space=add_prefix_space
@@ -64,13 +49,29 @@ class SentencePieceUnigramTokenizer(BaseTokenizer):
         vocab_size: int = 8000,
         show_progress: bool = True,
         special_tokens: List[Union[str, AddedToken]] = [],
+        unk_token: Optional[str] = None,
     ):
-        """ Train the model using the given files """
+        """
+        Train the model using the given files
+
+        Args:
+            files (:obj:`List[str]`):
+                A list of path to the files that we should use for training
+            vocab_size (:obj:`int`):
+                The size of the final vocabulary, including all tokens and alphabet.
+            show_progress (:obj:`bool`):
+                Whether to show progress bars while training.
+            special_tokens (:obj:`List[Union[str, AddedToken]]`):
+                A list of special tokens the model should know of.
+            unk_token (:obj:`str`, `optional`):
+                The unknown token to be used by the model.
+        """
 
         trainer = trainers.UnigramTrainer(
             vocab_size=vocab_size,
             special_tokens=special_tokens,
             show_progress=show_progress,
+            unk_token=unk_token,
         )
 
         if isinstance(files, str):
@@ -83,13 +84,29 @@ class SentencePieceUnigramTokenizer(BaseTokenizer):
         vocab_size: int = 8000,
         show_progress: bool = True,
         special_tokens: List[Union[str, AddedToken]] = [],
+        unk_token: Optional[str] = None,
     ):
-        """ Train the model using the given iterator """
+        """
+        Train the model using the given iterator
+
+        Args:
+            iterator (:obj:`Union[Iterator[str], Iterator[Iterator[str]]]`):
+                Any iterator over strings or list of strings
+            vocab_size (:obj:`int`):
+                The size of the final vocabulary, including all tokens and alphabet.
+            show_progress (:obj:`bool`):
+                Whether to show progress bars while training.
+            special_tokens (:obj:`List[Union[str, AddedToken]]`):
+                A list of special tokens the model should know of.
+            unk_token (:obj:`str`, `optional`):
+                The unknown token to be used by the model.
+        """
 
         trainer = trainers.UnigramTrainer(
             vocab_size=vocab_size,
             special_tokens=special_tokens,
             show_progress=show_progress,
+            unk_token=unk_token,
         )
 
         self._tokenizer.train_from_iterator(iterator, trainer=trainer)
@@ -124,14 +141,14 @@ class SentencePieceUnigramTokenizer(BaseTokenizer):
 
         tokenizer = Tokenizer(Unigram(vocab, unk_id))
 
-        tokenizer.normalizer = normalizers.Precompiled(precompiled_charsmap)
-        tokenizer.pre_tokenizer = pre_tokenizers.Sequence(
+        tokenizer.normalizer = normalizers.Sequence(
             [
-                pre_tokenizers.WhitespaceSplit(),
-                pre_tokenizers.Metaspace(
-                    replacement=replacement, add_prefix_space=add_prefix_space
-                ),
+                normalizers.Precompiled(precompiled_charsmap),
+                normalizers.Replace(Regex(" {2,}"), " "),
             ]
+        )
+        tokenizer.pre_tokenizer = pre_tokenizers.Metaspace(
+            replacement=replacement, add_prefix_space=add_prefix_space
         )
         tokenizer.decoder = decoders.Metaspace(
             replacement=replacement, add_prefix_space=add_prefix_space

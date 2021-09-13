@@ -177,7 +177,7 @@ impl UnigramTrainer {
         &self,
         sentences: &[Sentence],
         _progress: &Option<ProgressBar>,
-    ) -> Result<Vec<SentencePiece>> {
+    ) -> Vec<SentencePiece> {
         // Put all sentences in a string, separated by \0
         let total: usize = sentences
             .iter()
@@ -189,7 +189,7 @@ impl UnigramTrainer {
         let c_sentence_boundary = '\0';
         let k_sentence_boundary = '\0'.to_string();
         for (string, n) in sentences {
-            flat_string.push_str(&string);
+            flat_string.push_str(string);
             // XXX
             // Comment suggests we add sentence boundary, but it seems to be missing from actual
             // code in spm.
@@ -245,7 +245,7 @@ impl UnigramTrainer {
             }
         }
         to_log_prob(&mut seed_sentencepieces);
-        Ok(seed_sentencepieces)
+        seed_sentencepieces
     }
     fn prune_sentence_pieces(
         &self,
@@ -469,7 +469,7 @@ impl UnigramTrainer {
 
         // We use a UNK token when training, whatever the `self.unk_token`
         pieces.push(("<UNK>".into(), f64::NAN));
-        pieces.extend(self.make_seed_sentence_pieces(&sentences, &progress)?);
+        pieces.extend(self.make_seed_sentence_pieces(&sentences, &progress));
         self.finalize_progress(&progress, sentences.len());
 
         // Useful to check compatibility with spm.
@@ -604,9 +604,7 @@ mod tests {
         assert_eq!(required_chars.len(), 13);
 
         let progress = None;
-        let table = trainer
-            .make_seed_sentence_pieces(&sentences, &progress)
-            .unwrap();
+        let table = trainer.make_seed_sentence_pieces(&sentences, &progress);
 
         let target_strings = vec![
             "s", "i", " ", "達", "友", "ん", "は", "に", "ち", "こ", "h", "a", "T", "is ", "s ",
@@ -615,7 +613,7 @@ mod tests {
         let strings: Vec<_> = table.iter().map(|(string, _)| string).collect();
         assert_eq!(strings, target_strings);
 
-        let scores: Vec<_> = table.iter().map(|(_, score)| score).collect();
+        let scores = table.iter().map(|(_, score)| score);
         let target_scores = vec![
             -2.5649493574615367, // 2.0
             -2.5649493574615367, // 2.0
@@ -634,7 +632,7 @@ mod tests {
             -1.8718021769015916, // 4.0
         ];
 
-        for (score, target_score) in scores.into_iter().zip(target_scores) {
+        for (score, target_score) in scores.zip(target_scores) {
             assert_approx_eq!(*score, target_score, 0.01);
         }
     }

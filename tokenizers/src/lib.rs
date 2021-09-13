@@ -1,4 +1,5 @@
 #![warn(clippy::all)]
+#![allow(clippy::upper_case_acronyms)]
 #![doc(html_favicon_url = "https://huggingface.co/favicon.ico")]
 #![doc(html_logo_url = "https://huggingface.co/landing/assets/huggingface_logo.svg")]
 
@@ -19,6 +20,20 @@
 //!    `BPE` or `WordPiece`.
 //! 4. The `PostProcessor`: in charge of post-processing the `Encoding` to add anything relevant
 //!    that, for example, a language model would need, such as special tokens.
+//!
+//! ## Loading a pretrained tokenizer from the Hub
+//! ```
+//! use tokenizers::tokenizer::{Result, Tokenizer};
+//!
+//! fn main() -> Result<()> {
+//!     let tokenizer = Tokenizer::from_pretrained("bert-base-cased", None)?;
+//!
+//!     let encoding = tokenizer.encode("Hey there!", false)?;
+//!     println!("{:?}", encoding.get_tokens());
+//!
+//!     Ok(())
+//! }
+//! ```
 //!
 //! ## Deserialization and tokenization example
 //!
@@ -128,3 +143,6 @@ pub use tokenizer::*;
 
 // Re-export also parallelism utils
 pub use utils::parallelism;
+
+// Re-export for from_pretrained
+pub use utils::from_pretrained::FromPretrainedParameters;

@@ -3,7 +3,7 @@ from tokenizers.implementations import SentencePieceUnigramTokenizer, BaseTokeni
 from tokenizers.processors import TemplateProcessing
 from tokenizers.models import Unigram, BPE
 from tokenizers import decoders
-from tokenizers import Tokenizer
+from tokenizers import Tokenizer, Regex
 from tokenizers.normalizers import (
     StripAccents,
     NFKD,
@@ -81,7 +81,7 @@ class SpmConverter(Converter):
         elif model_type == 2:
             vocab, merges = SentencePieceExtractor(self.original_tokenizer.vocab_file).extract()
             tokenizer = Tokenizer(
-                BPE(vocab, merges, unk_token=proto.trainer_spec.unk_piece, fuse_unk=True,)
+                BPE(vocab, merges, unk_token=proto.trainer_spec.unk_piece, fuse_unk=True)
             )
         else:
             raise Exception(
@@ -92,7 +92,7 @@ class SpmConverter(Converter):
 
     def normalizer(self, proto):
         precompiled_charsmap = proto.normalizer_spec.precompiled_charsmap
-        return Precompiled(precompiled_charsmap)
+        return Sequence([Precompiled(precompiled_charsmap), Replace(Regex(" {2,}"), " ")])
 
     def post_processor(self, tokenizer):
         return None
@@ -105,11 +105,8 @@ class SpmConverter(Converter):
 
         replacement = "▁"
         add_prefix_space = True
-        tokenizer.pre_tokenizer = PSequence(
-            [
-                WhitespaceSplit(),
-                Metaspace(replacement=replacement, add_prefix_space=add_prefix_space),
-            ]
+        tokenizer.pre_tokenizer = Metaspace(
+            replacement=replacement, add_prefix_space=add_prefix_space
         )
         tokenizer.decoder = decoders.Metaspace(
             replacement=replacement, add_prefix_space=add_prefix_space
@@ -143,6 +140,7 @@ class AlbertConverter(SpmConverter):
 
         precompiled_charsmap = proto.normalizer_spec.precompiled_charsmap
         normalizers.append(Precompiled(precompiled_charsmap))
+        normalizers.append(Replace(Regex(" {2,}"), " "))
         return Sequence(normalizers)
 
     def post_processor(self, tokenizer):
@@ -279,6 +277,7 @@ class XLNetConverter(SpmConverter):
 
         precompiled_charsmap = proto.normalizer_spec.precompiled_charsmap
         normalizers.append(Precompiled(precompiled_charsmap))
+        normalizers.append(Replace(Regex(" {2,}"), " "))
         return Sequence(normalizers)
 
     def post_processor(self, tokenizer):
@@ -316,7 +315,7 @@ class PegasusConverter(SpmConverter):
         return TemplateProcessing(
             seq_a=["$0", eos],
             seq_b=["$1", eos],
-            special_tokens=[(eos, tokenizer.get_vocab()[eos]),],
+            special_tokens=[(eos, tokenizer.get_vocab()[eos])],
         )
 
 
@@ -325,7 +324,7 @@ class T5Converter(SpmConverter):
         return TemplateProcessing(
             seq_a=["$0", "</s>"],
             seq_b=["$1", "</s>"],
-            special_tokens=[("</s>", tokenizer.get_vocab()["</s>"]),],
+            special_tokens=[("</s>", tokenizer.get_vocab()["</s>"])],
         )
 
 

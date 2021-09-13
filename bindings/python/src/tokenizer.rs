@@ -487,10 +487,9 @@ impl PyTokenizer {
         }
     }
 
-    fn __getnewargs__<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
+    fn __getnewargs__<'p>(&self, py: Python<'p>) -> &'p PyTuple {
         let model = PyModel::from(BPE::default()).into_py(py);
-        let args = PyTuple::new(py, vec![model]);
-        Ok(args)
+        PyTuple::new(py, vec![model])
     }
 
     /// Instantiate a new :class:`~tokenizers.Tokenizer` from the given JSON string.
@@ -545,6 +544,43 @@ impl PyTokenizer {
         Ok(Self { tokenizer })
     }
 
+    /// Instantiate a new :class:`~tokenizers.Tokenizer` from an existing file on the
+    /// Hugging Face Hub.
+    ///
+    /// Args:
+    ///     identifier (:obj:`str`):
+    ///         The identifier of a Model on the Hugging Face Hub, that contains
+    ///         a tokenizer.json file
+    ///     revision (:obj:`str`, defaults to `main`):
+    ///         A branch or commit id
+    ///     auth_token (:obj:`str`, `optional`, defaults to `None`):
+    ///         An optional auth token used to access private repositories on the
+    ///         Hugging Face Hub
+    ///
+    /// Returns:
+    ///     :class:`~tokenizers.Tokenizer`: The new tokenizer
+    #[staticmethod]
+    #[args(revision = "String::from(\"main\")", auth_token = "None")]
+    #[text_signature = "(identifier, revision=\"main\", auth_token=None)"]
+    fn from_pretrained(
+        identifier: &str,
+        revision: String,
+        auth_token: Option<String>,
+    ) -> PyResult<Self> {
+        let params = tk::FromPretrainedParameters {
+            revision,
+            auth_token,
+            user_agent: [("bindings", "Python"), ("version", crate::VERSION)]
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect(),
+        };
+
+        let tokenizer: PyResult<_> =
+            ToPyResult(Tokenizer::from_pretrained(identifier, Some(params))).into();
+        Ok(Self::new(tokenizer?))
+    }
+
     /// Gets a serialized string representing this :class:`~tokenizers.Tokenizer`.
     ///
     /// Args:
@@ -565,10 +601,10 @@ impl PyTokenizer {
     ///     path (:obj:`str`):
     ///         A path to a file in which to save the serialized tokenizer.
     ///
-    ///     pretty (:obj:`bool`, defaults to :obj:`False`):
+    ///     pretty (:obj:`bool`, defaults to :obj:`True`):
     ///         Whether the JSON file should be pretty formatted.
-    #[args(pretty = false)]
-    #[text_signature = "(self, pretty=False)"]
+    #[args(pretty = true)]
+    #[text_signature = "(self, pretty=True)"]
     fn save(&self, path: &str, pretty: bool) -> PyResult<()> {
         ToPyResult(self.tokenizer.save(path, pretty)).into()
     }
@@ -577,11 +613,10 @@ impl PyTokenizer {
     /// :param is_pair: Boolean indicating if the input would be a single sentence or a pair
     /// :return:
     #[text_signature = "(self, is_pair)"]
-    fn num_special_tokens_to_add(&self, is_pair: bool) -> PyResult<usize> {
-        Ok(self
-            .tokenizer
+    fn num_special_tokens_to_add(&self, is_pair: bool) -> usize {
+        self.tokenizer
             .get_post_processor()
-            .map_or(0, |p| p.added_tokens(is_pair)))
+            .map_or(0, |p| p.added_tokens(is_pair))
     }
 
     /// Get the underlying vocabulary
@@ -594,8 +629,8 @@ impl PyTokenizer {
     ///     :obj:`Dict[str, int]`: The vocabulary
     #[args(with_added_tokens = true)]
     #[text_signature = "(self, with_added_tokens=True)"]
-    fn get_vocab(&self, with_added_tokens: bool) -> PyResult<HashMap<String, u32>> {
-        Ok(self.tokenizer.get_vocab(with_added_tokens))
+    fn get_vocab(&self, with_added_tokens: bool) -> HashMap<String, u32> {
+        self.tokenizer.get_vocab(with_added_tokens)
     }
 
     /// Get the size of the underlying vocabulary
@@ -608,8 +643,8 @@ impl PyTokenizer {
     ///     :obj:`int`: The size of the vocabulary
     #[args(with_added_tokens = true)]
     #[text_signature = "(self, with_added_tokens=True)"]
-    fn get_vocab_size(&self, with_added_tokens: bool) -> PyResult<usize> {
-        Ok(self.tokenizer.get_vocab_size(with_added_tokens))
+    fn get_vocab_size(&self, with_added_tokens: bool) -> usize {
+        self.tokenizer.get_vocab_size(with_added_tokens)
     }
 
     /// Enable truncation

@@ -16,6 +16,29 @@ use tk::normalizers::{
 use tk::{NormalizedString, Normalizer};
 use tokenizers as tk;
 
+/// Represents the different kind of NormalizedString we can receive from Python:
+///  - Owned: Created in Python and owned by Python
+///  - RefMut: A mutable reference to a NormalizedString owned by Rust
+#[derive(FromPyObject)]
+enum PyNormalizedStringMut<'p> {
+    Owned(PyRefMut<'p, PyNormalizedString>),
+    RefMut(PyNormalizedStringRefMut),
+}
+
+impl PyNormalizedStringMut<'_> {
+    /// Normalized the underlying `NormalizedString` using the provided normalizer
+    pub fn normalize_with<N>(&mut self, normalizer: &N) -> PyResult<()>
+    where
+        N: Normalizer,
+    {
+        match self {
+            PyNormalizedStringMut::Owned(ref mut n) => normalizer.normalize(&mut n.normalized),
+            PyNormalizedStringMut::RefMut(n) => n.map_as_mut(|n| normalizer.normalize(n))?,
+        }
+        .map_err(|e| exceptions::PyException::new_err(format!("{}", e)))
+    }
+}
+
 /// Base class for all normalizers
 ///
 /// This class is not supposed to be instantiated directly. Instead, any implementation of a
@@ -79,10 +102,10 @@ impl Normalizer for PyNormalizer {
 #[pymethods]
 impl PyNormalizer {
     #[staticmethod]
-    fn custom(obj: PyObject) -> PyResult<Self> {
-        Ok(Self {
+    fn custom(obj: PyObject) -> Self {
+        Self {
             normalizer: PyNormalizerWrapper::Custom(CustomNormalizer::new(obj)).into(),
-        })
+        }
     }
 
     fn __getstate__(&self, py: Python) -> PyResult<PyObject> {
@@ -122,8 +145,8 @@ impl PyNormalizer {
     ///         The normalized string on which to apply this
     ///         :class:`~tokenizers.normalizers.Normalizer`
     #[text_signature = "(self, normalized)"]
-    fn normalize(&self, normalized: &mut PyNormalizedString) -> PyResult<()> {
-        ToPyResult(self.normalizer.normalize(&mut normalized.normalized)).into()
+    fn normalize(&self, mut normalized: PyNormalizedStringMut) -> PyResult<()> {
+        normalized.normalize_with(&self.normalizer)
     }
 
     /// Normalize the given string
@@ -256,10 +279,10 @@ impl PyBertNormalizer {
         handle_chinese_chars: bool,
         strip_accents: Option<bool>,
         lowercase: bool,
-    ) -> PyResult<(Self, PyNormalizer)> {
+    ) -> (Self, PyNormalizer) {
         let normalizer =
             BertNormalizer::new(clean_text, handle_chinese_chars, strip_accents, lowercase);
-        Ok((PyBertNormalizer {}, normalizer.into()))
+        (PyBertNormalizer {}, normalizer.into())
     }
 }
 
@@ -270,8 +293,8 @@ pub struct PyNFD {}
 #[pymethods]
 impl PyNFD {
     #[new]
-    fn new() -> PyResult<(Self, PyNormalizer)> {
-        Ok((PyNFD {}, PyNormalizer::new(NFD.into())))
+    fn new() -> (Self, PyNormalizer) {
+        (PyNFD {}, PyNormalizer::new(NFD.into()))
     }
 }
 
@@ -282,8 +305,8 @@ pub struct PyNFKD {}
 #[pymethods]
 impl PyNFKD {
     #[new]
-    fn new() -> PyResult<(Self, PyNormalizer)> {
-        Ok((PyNFKD {}, NFKD.into()))
+    fn new() -> (Self, PyNormalizer) {
+        (PyNFKD {}, NFKD.into())
     }
 }
 
@@ -294,8 +317,8 @@ pub struct PyNFC {}
 #[pymethods]
 impl PyNFC {
     #[new]
-    fn new() -> PyResult<(Self, PyNormalizer)> {
-        Ok((PyNFC {}, NFC.into()))
+    fn new() -> (Self, PyNormalizer) {
+        (PyNFC {}, NFC.into())
     }
 }
 
@@ -306,8 +329,8 @@ pub struct PyNFKC {}
 #[pymethods]
 impl PyNFKC {
     #[new]
-    fn new() -> PyResult<(Self, PyNormalizer)> {
-        Ok((PyNFKC {}, NFKC.into()))
+    fn new() -> (Self, PyNormalizer) {
+        (PyNFKC {}, NFKC.into())
     }
 }
 
@@ -337,8 +360,8 @@ impl PySequence {
         ))
     }
 
-    fn __getnewargs__<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
-        Ok(PyTuple::new(py, &[PyList::empty(py)]))
+    fn __getnewargs__<'p>(&self, py: Python<'p>) -> &'p PyTuple {
+        PyTuple::new(py, &[PyList::empty(py)])
     }
 }
 
@@ -356,8 +379,8 @@ pub struct PyLowercase {}
 #[pymethods]
 impl PyLowercase {
     #[new]
-    fn new() -> PyResult<(Self, PyNormalizer)> {
-        Ok((PyLowercase {}, Lowercase.into()))
+    fn new() -> (Self, PyNormalizer) {
+        (PyLowercase {}, Lowercase.into())
     }
 }
 
@@ -389,8 +412,8 @@ impl PyStrip {
 
     #[new]
     #[args(left = "true", right = "true")]
-    fn new(left: bool, right: bool) -> PyResult<(Self, PyNormalizer)> {
-        Ok((PyStrip {}, Strip::new(left, right).into()))
+    fn new(left: bool, right: bool) -> (Self, PyNormalizer) {
+        (PyStrip {}, Strip::new(left, right).into())
     }
 }
 
@@ -401,8 +424,8 @@ pub struct PyStripAccents {}
 #[pymethods]
 impl PyStripAccents {
     #[new]
-    fn new() -> PyResult<(Self, PyNormalizer)> {
-        Ok((PyStripAccents {}, StripAccents.into()))
+    fn new() -> (Self, PyNormalizer) {
+        (PyStripAccents {}, StripAccents.into())
     }
 }
 
@@ -413,8 +436,8 @@ pub struct PyNmt {}
 #[pymethods]
 impl PyNmt {
     #[new]
-    fn new() -> PyResult<(Self, PyNormalizer)> {
-        Ok((PyNmt {}, Nmt.into()))
+    fn new() -> (Self, PyNormalizer) {
+        (PyNmt {}, Nmt.into())
     }
 }
 
@@ -457,7 +480,7 @@ impl PyReplace {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct CustomNormalizer {
     inner: PyObject,
 }
@@ -500,7 +523,7 @@ impl<'de> Deserialize<'de> for CustomNormalizer {
     }
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
 pub(crate) enum PyNormalizerWrapper {
     Custom(CustomNormalizer),
@@ -519,7 +542,7 @@ impl Serialize for PyNormalizerWrapper {
     }
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
 pub(crate) enum PyNormalizerTypeWrapper {
     Sequence(Vec<Arc<RwLock<PyNormalizerWrapper>>>),
@@ -646,7 +669,7 @@ mod test {
     #[test]
     fn deserialize_sequence() {
         let string = r#"{"type": "NFKC"}"#;
-        let normalizer: PyNormalizer = serde_json::from_str(&string).unwrap();
+        let normalizer: PyNormalizer = serde_json::from_str(string).unwrap();
         match normalizer.normalizer {
             PyNormalizerTypeWrapper::Single(inner) => match *inner.as_ref().read().unwrap() {
                 PyNormalizerWrapper::Wrapped(NormalizerWrapper::NFKC(_)) => {}

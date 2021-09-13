@@ -4,6 +4,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0]
+
+### Added
+- [#657]: Add SplitDelimiterBehavior customization to Punctuation constructor
+
+### Changed
+- [#718]: Fix `WordLevel` tokenizer determinism during training
+- [#762]: Add a way to specify the unknown token in `SentencePieceUnigramTokenizer`
+- [#770]: Improved documentation for `UnigramTrainer`
+- [#780]: Add `Tokenizer.from_pretrained` to load tokenizers from the Hugging Face Hub
+- [#793]: Saving a pretty JSON file by default when saving a tokenizer
+
+## [0.10.3]
+
+### Fixed
+- [#686]: Fix SPM conversion process for whitespace deduplication
+- [#707]: Fix stripping strings containing Unicode characters
+
+### Added
+- [#693]: Add a CTC Decoder for Wave2Vec models
+
+### Removed
+- [#714]: Removed support for Python 3.5
+
+## [0.10.2]
+
+### Fixed
+- [#652]: Fix offsets for `Precompiled` corner case
+- [#656]: Fix BPE `continuing_subword_prefix`
+- [#674]: Fix `Metaspace` serialization problems
+
+## [0.10.1]
+
+### Fixed
+- [#616]: Fix SentencePiece tokenizers conversion
+- [#617]: Fix offsets produced by Precompiled Normalizer (used by tokenizers converted from SPM)
+- [#618]: Fix Normalizer.normalize with `PyNormalizedStringRefMut`
+- [#620]: Fix serialization/deserialization for overlapping models
+- [#621]: Fix `ByteLevel` instantiation from a previously saved state (using `__getstate__()`)
+
 ## [0.10.0]
 
 ### Added
@@ -22,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 `tokenizer.model.dropout = 0.1`)
 - [#538]: The API Reference has been improved and is now up-to-date.
 
-## Fixed
+### Fixed
 - [#519]: During training, the `Model` is now trained in-place. This fixes several bugs that were
 forcing to reload the `Model` after a training.
 - [#539]: Fix `BaseTokenizer` enable_truncation docstring
@@ -293,6 +333,24 @@ delimiter (Works like `.split(delimiter)`)
 - Fix a bug that was causing crashes in Python 3.5
 
 
+[#793]: https://github.com/huggingface/tokenizers/pull/793
+[#780]: https://github.com/huggingface/tokenizers/pull/780
+[#770]: https://github.com/huggingface/tokenizers/pull/770
+[#762]: https://github.com/huggingface/tokenizers/pull/762
+[#718]: https://github.com/huggingface/tokenizers/pull/718
+[#714]: https://github.com/huggingface/tokenizers/pull/714
+[#707]: https://github.com/huggingface/tokenizers/pull/707
+[#693]: https://github.com/huggingface/tokenizers/pull/693
+[#686]: https://github.com/huggingface/tokenizers/pull/686
+[#674]: https://github.com/huggingface/tokenizers/pull/674
+[#657]: https://github.com/huggingface/tokenizers/pull/657
+[#656]: https://github.com/huggingface/tokenizers/pull/656
+[#652]: https://github.com/huggingface/tokenizers/pull/652
+[#621]: https://github.com/huggingface/tokenizers/pull/621
+[#620]: https://github.com/huggingface/tokenizers/pull/620
+[#618]: https://github.com/huggingface/tokenizers/pull/618
+[#617]: https://github.com/huggingface/tokenizers/pull/617
+[#616]: https://github.com/huggingface/tokenizers/pull/616
 [#590]: https://github.com/huggingface/tokenizers/pull/590
 [#574]: https://github.com/huggingface/tokenizers/pull/574
 [#544]: https://github.com/huggingface/tokenizers/pull/544
