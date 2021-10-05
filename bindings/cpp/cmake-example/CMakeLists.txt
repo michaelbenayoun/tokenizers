@@ -7,14 +7,14 @@ if (NOT TOKENIZERS_LIBRARY_PATH)
     message(FATAL_ERROR "You must specify the path to the tokenizers library")
 endif()
 
-set(CMAKE_BUILD_TYPE "debug" CACHE STRING "Whether to build tokenizers-cpp in debug or release mode")
+set(CARGO_BUILD_TYPE "debug" CACHE STRING "Whether to build tokenizers-cpp in debug or release mode")
 set_property(
-    CACHE CMAKE_BUILD_TYPE
+    CACHE CARGO_BUILD_TYPE
     PROPERTY STRINGS
     "debug" "release"
 )
 
-if(CMAKE_BUILD_TYPE STREQUAL "debug")
+if(CARGO_BUILD_TYPE STREQUAL "debug")
     execute_process(
         COMMAND
         bash -c "cargo build --manifest-path=${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/Cargo.toml"
@@ -27,19 +27,19 @@ else()
 endif()
 message(STATUS "Building tokenizers-cpp bindings - done")
 
-execute_process(COMMAND bash "create_symlinks.sh" ${TOKENIZERS_LIBRARY_PATH} ${CMAKE_BUILD_TYPE})
+execute_process(COMMAND bash "create_symlinks.sh" ${TOKENIZERS_LIBRARY_PATH} ${CARGO_BUILD_TYPE})
 message(STATUS "Created symlinks for bindings related libraries")
 
 # Find cxxrust
-find_library(CXXBRIDGE_LIBRARY_PATH cxxbridge1 PATH ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/target/${CMAKE_BUILD_TYPE})
+find_library(CXXBRIDGE_LIBRARY_PATH cxxbridge1 PATH ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/target/${CARGO_BUILD_TYPE})
 message(STATUS "Found cxxbridge: ${CXXBRIDGE_LIBRARY_PATH}")
 
 # Find tokenizers
-find_library(TOKENIZERS_RUST_LIBRARY tokenizers PATH ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/target/${CMAKE_BUILD_TYPE})
+find_library(TOKENIZERS_RUST_LIBRARY tokenizers PATH ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/target/${CARGO_BUILD_TYPE})
 message(STATUS "Found tokenizers: ${TOKENIZERS_RUST_LIBRARY}")
 
 # Find tokenizers-cpp
-find_library(TOKENIZERS_CPP_LIBRARY_PATH tokenizers-cpp PATH ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/target/${CMAKE_BUILD_TYPE})
+find_library(TOKENIZERS_CPP_LIBRARY_PATH tokenizers-cpp PATH ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/target/${CARGO_BUILD_TYPE})
 message(STATUS "Found tokenizers-cpp: ${TOKENIZERS_CPP_LIBRARY_PATH}")
 
 
@@ -48,7 +48,7 @@ include_directories(
     ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp
     ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/target/cxxbridge
     ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/thirdparty
-    ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/target/${CMAKE_BUILD_TYPE}/tokenizers-cpp
+    ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/target/${CARGO_BUILD_TYPE}/tokenizers-cpp
 )
 
 add_executable(tokenizers_cpp_test main.cpp)
