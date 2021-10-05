@@ -3,17 +3,32 @@ project(tokenizers_cpp_test)
 
 set(CMAKE_CXX_STANDARD 14)
 
+if (NOT TOKENIZERS_LIBRARY_PATH)
+    message(FATAL_ERROR "You must specify the path to the tokenizers library")
+endif()
 
-set(TOKENIZERS_LIBRARY_PATH $ENV{TOKENIZERS_LIBRARY_PATH})
-set(CMAKE_BUILD_TYPE "debug")
+set(CMAKE_BUILD_TYPE "debug" CACHE STRING "Whether to build tokenizers-cpp in debug or release mode")
+set_property(
+    CACHE CMAKE_BUILD_TYPE
+    PROPERTY STRINGS
+    "debug" "release"
+)
 
-# execute_process(
-#     COMMAND
-#     bash -c "cargo build --manifest-path=${TOKENIZERS_LIBRARY_PATH}/Cargo.toml"
-# )
-# message(STATUS "Building tokenizers")
+if(CMAKE_BUILD_TYPE STREQUAL "debug")
+    execute_process(
+        COMMAND
+        bash -c "cargo build --manifest-path=${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/Cargo.toml"
+    )
+else()
+    execute_process(
+        COMMAND
+        bash -c "cargo build --manifest-path=${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/Cargo.toml --release"
+    )
+endif()
+message(STATUS "Building tokenizers-cpp bindings - done")
 
 execute_process(COMMAND bash "create_symlinks.sh" ${TOKENIZERS_LIBRARY_PATH} ${CMAKE_BUILD_TYPE})
+message(STATUS "Created symlinks for bindings related libraries")
 
 # Find cxxrust
 find_library(CXXBRIDGE_LIBRARY_PATH cxxbridge1 PATH ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/target/${CMAKE_BUILD_TYPE})

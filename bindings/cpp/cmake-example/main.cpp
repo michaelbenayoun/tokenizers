@@ -1,11 +1,11 @@
 #include <iostream>
-#include "tokenizers-cpp/tokenizer.h"
+#include <tokenizers-cpp/tokenizer.h>
 
 using namespace huggingface::tokenizers;
 
 void test_tokenizer(Tokenizer& tokenizer) {
-    auto encodings =  tokenizer.encode("My name is Morgan", true);
-    std::cout << "Encoding: 'My name is Morgan' -> " << encodings->len() << " tokens:" << std::endl;
+    auto encodings =  tokenizer.encode("HuggingFace is great!", true);
+    std::cout << "Encoding: 'HuggingFace is great!' -> " << encodings->len() << " tokens:" << std::endl;
     std::cout << "Tokens: ";
     for(const auto &item: encodings.get_tokens())
         std::cout << item << " ";
@@ -31,7 +31,7 @@ int main() {
 
     std::cout << std::endl;
     std::cout << "* By loading from file directly:" << std::endl;
-    auto tokenizer_from_file = Tokenizer::from_file("/home/michael/projects/tokenizers/bindings/cpp/cmake-example/data/tokenizer.json");
+    auto tokenizer_from_file = Tokenizer::from_file("data/tokenizer.json");
     test_tokenizer(tokenizer_from_file);
 
     std::cout << std::endl;
