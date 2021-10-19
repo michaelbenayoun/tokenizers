@@ -148,6 +148,16 @@ public:
      *
      * @param file The path to the JSON file.
      */
+    static Tokenizer from_str(nonstd::string_view str) {
+        auto tokenizer = ffi::from_str(ffi::to_rust_str(str));
+        return {std::move(reinterpret_cast<rust::Box<ffi::Tokenizer>&>(tokenizer))};
+    }
+
+    /**
+     * @brief Constructs a Tokenizer from a JSON file.
+     *
+     * @param file The path to the JSON file.
+     */
     static Tokenizer from_file(nonstd::string_view file) {
         auto tokenizer = ffi::from_file(ffi::to_rust_str(file));
         return {std::move(reinterpret_cast<rust::Box<ffi::Tokenizer>&>(tokenizer))};

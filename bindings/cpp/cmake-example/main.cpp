@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <tokenizers-cpp/tokenizer.h>
 
 using namespace huggingface::tokenizers;
@@ -33,6 +35,14 @@ int main() {
     std::cout << "* By loading from file directly:" << std::endl;
     auto tokenizer_from_file = Tokenizer::from_file("data/tokenizer.json");
     test_tokenizer(tokenizer_from_file);
+
+    std::cout << std::endl;
+    std::cout << "* By loading from a string:" << std::endl;
+    std::ifstream t("data/tokenizer.json");
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    auto tokenizer_from_string = Tokenizer::from_str(buffer.str());
+    test_tokenizer(tokenizer_from_string);
 
     std::cout << std::endl;
     std::cout << "* By loading from the Huggingface Hub:" << std::endl;

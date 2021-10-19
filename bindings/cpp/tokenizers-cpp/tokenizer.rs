@@ -63,6 +63,8 @@ mod ffi {
         // FIXME many of the below functions should take Box, not &.
         //  Look for clone() in the implementations.
         fn tokenizer(model: &Model) -> Box<Tokenizer>;
+
+        fn from_str(s: &str) -> Result<Box<Tokenizer1>>;
         fn from_file(file: &str) -> Result<Box<Tokenizer1>>;
         fn from_pretrained(identifier: &str) -> Result<Box<Tokenizer1>>;
 
@@ -170,6 +172,14 @@ struct Tokenizer1(tk::Tokenizer);
 
 fn tokenizer(model: &Model) -> Box<Tokenizer> {
     Box::new(Tokenizer(tk::TokenizerImpl::new(model.clone())))
+}
+
+fn from_str(s: &str) -> Result<Box<Tokenizer1>> {
+    use std::str::FromStr;
+    return match tk::Tokenizer::from_str(s) {
+        Ok(tokenizer) => Ok(Box::new(Tokenizer1(tokenizer))),
+        Err(e) => return Err(e),
+    }
 }
 
 fn from_file(file: &str) -> Result<Box<Tokenizer1>> {
