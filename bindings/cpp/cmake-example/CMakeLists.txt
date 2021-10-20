@@ -14,15 +14,25 @@ set_property(
     "debug" "release"
 )
 
-if(CARGO_BUILD_TYPE STREQUAL "debug")
+set(CARGO_CONFIG_PATH ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/.cargo/config.toml)
+set(CARGO_MANIFEST_PATH ${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/Cargo.toml)
+
+if(CMAKE_TOOLCHAINE_NAME STREQUAL "aarch64-linux-gnu")
+    set(CARGO_TARGET "--target aarch64-unknown-linux-gnu")
+    set(CARGO_BUILD_TYPE "aarch64-unknown-linux-gnu/${CARGO_BUILD_TYPE}")
+else()
+    set(CARGO_TARGET "")
+endif()
+
+if(CARGO_BUILD_TYPE MATCHES "debug")
     execute_process(
         COMMAND
-        bash -c "cargo build --manifest-path=${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/Cargo.toml"
+        bash -c "cargo build --manifest-path=${CARGO_MANIFEST_PATH} ${CARGO_TARGET}"
     )
 else()
     execute_process(
         COMMAND
-        bash -c "cargo build --manifest-path=${TOKENIZERS_LIBRARY_PATH}/bindings/cpp/Cargo.toml --release"
+        bash -c "cargo build --manifest-path=${CARGO_MANIFEST_PATH} ${CARGO_TARGET} --release"
     )
 endif()
 message(STATUS "Building tokenizers-cpp bindings - done")
