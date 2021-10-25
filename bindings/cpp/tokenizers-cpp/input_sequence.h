@@ -81,8 +81,9 @@ public:
     InputSequenceTag get_tag() const {
         switch (tag_) {
             case STR:
-            case STRING:
                 return InputSequenceTag::Str;
+            case STRING:
+                return InputSequenceTag::String;
             case STRING_VECTOR:
                 return InputSequenceTag::StringSlice;
             default:

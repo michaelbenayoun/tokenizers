@@ -44,10 +44,12 @@ int main() {
     auto tokenizer_from_string = Tokenizer::from_str(buffer.str());
     test_tokenizer(tokenizer_from_string);
 
+    /*
     std::cout << std::endl;
     std::cout << "* By loading from the Huggingface Hub:" << std::endl;
     auto tokenizer_from_hub = Tokenizer::from_pretrained("bert-base-uncased");
     test_tokenizer(tokenizer_from_hub);
+    */
 
     return 0;
 }
